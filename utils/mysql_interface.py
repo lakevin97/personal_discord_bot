@@ -1,9 +1,8 @@
 import pandas as pd
 import json
+from utils import DEBUG
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
-
-DEBUG = True
 
 class MySql_Interface:
     def __init__(self):
