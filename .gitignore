@@ -1,6 +1,5 @@
 mysql/Default_Inserts.sql
 mysql/Retrieve_columns.sql
-python/utils/__pycache__/
-python/credentials.json
-python/main.py
+utils/__pycache__/
+credentials.json
 .DS_Store
