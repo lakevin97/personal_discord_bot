@@ -1,6 +1,6 @@
 from utils import DEBUG
 from cogs.destiny2_cogs import DestinyCogs
-import discord
+import discord 
 import json
 
 def get_auth_token() -> str:
@@ -20,7 +20,7 @@ def initialize_bot(token:str):
     async def on_ready():
         print("=== Addings Cogs")
         await client.add_cog(DestinyCogs(client))
-
+        
         try:
             synced = await client.tree.sync()
             print(f"Synced {len(synced)} commands!")
