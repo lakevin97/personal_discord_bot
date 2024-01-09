@@ -36,9 +36,10 @@ class MySql_Interface:
         This function closes the connection between the application and MySql.
         '''
         try:
-            print("=== Closing cnx...") if DEBUG == True else None
+            print("=== [Closing Connection Begin]") if DEBUG == True else None
             self.cnx.dispose()
-            print("=> Cnx closed successfully.") if DEBUG == True else None
+            print("\t=> Cnx closed successfully.") if DEBUG == True else None
+            print("=== [Closing Connection End]") if DEBUG == True else None
 
         except SQLAlchemyError as err:
             print(
@@ -58,31 +59,33 @@ class MySql_Interface:
         '''
 
         df = None
+        success = False
 
-        print("=== [Send_Query] Begin") if DEBUG == True else None
+        print("=== [Send_Query Begin]") if DEBUG == True else None
 
         if "SELECT" in query.upper():
             print(f"\t=> Running a SELECT query: {query}") if DEBUG == True else None
 
             try:
                 df = pd.read_sql_query(query, self.cnx)
+                success = True
             except SQLAlchemyError as err:
-                print(f"\t> Unable to read data from query: {err}")
+                print(f"\n\t> Unable to read data from query: \n\n\t{err}")
 
         else:
 
-            print(f"\t=> Running an INSERT query: {query.strip()}") if "INSERT" in query else print(f"\t=> Running an Update query: {query.strip()}")
+            if DEBUG == True:
+                print(f"\t=> Running an INSERT query: {query.strip()}") if "INSERT" in query else print(f"\t=> Running an Update query: {query.strip()}")
             
             with self.cnx.connect() as connection:
                 try:
-                    result = connection.execute(
-                        text(query.strip()))
+                    connection.execute(text(query.strip()))
                     connection.commit()
-
+                    success = True
                 except SQLAlchemyError as err:
                     print(
-                        f"\t> Cannot update due to the following error:\n\n\t{err}")
+                        f"\n\t> Cannot update due to the following error:\n\n\t{err}")
 
-        print("=== [Send_Query] End") if DEBUG == True else None
+        print("=== [Send_Query End]") if DEBUG == True else None
 
-        return df
+        return (df, success)

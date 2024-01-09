@@ -3,3 +3,4 @@ mysql/Retrieve_columns.sql
 utils/__pycache__/
 credentials.json
 .DS_Store
+cogs/__pycache__/destiny2_cogs.cpython-39.pyc
