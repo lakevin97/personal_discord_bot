@@ -11,9 +11,7 @@ def get_auth_token() -> str:
         print("=== 'credentials.json' file is unavailable. Please check directory and try again.")
 
 def initialize_bot(token:str):
-    intents = discord.Intents.default()
-    intents.message_content = True
-
+    intents = discord.Intents.all()
     client = discord.ext.commands.Bot(command_prefix="!", intents=intents)
  
     @client.event
