@@ -115,15 +115,15 @@ class DestinyCogs(commands.Cog):
         if user.bot == True or len(message.embeds) == 0:
             return
                 
-        current_activity = self.get_activity(message.embeds[0])
+        activity_snapshot, embed_info = self.get_activity(message.embeds[0], )
 
-        if not self.update_db_add(current_activity, user):
+        if not self.update_db_add(activity_snapshot, embed_info, user):
             print(f"=== Activity Full")
-
-        new_roster = current_activity["Roster"] + f"\n{user.name}"
-        new_embed = self.generate_embed(new_roster, current_activity, current_activity["token_id"])
-        
-        await message.edit(embed=new_embed)
+        else:
+            new_roster = embed_info["Roster"] + f"\n{user.name}"
+            new_embed = self.generate_embed(new_roster, embed_info, embed_info["token_id"])
+            await message.edit(embed=new_embed)
+            
 
     ###############################################
     # Remove player name from database row
@@ -215,40 +215,35 @@ class DestinyCogs(commands.Cog):
         ROSTER=2
 
         embed_info = {
-            "ID": embed_msg['footer']['text'],
-            "ACTIVITY_TYPE": embed_msg['fields'][ACTIVITY_TYPE]['value'],
-            "ACTIVITY_NAME": embed_msg['fields'][ACTIVITY_NAME]['value'],
-            "ROSTER": embed_msg['fields'][ROSTER]['value']
+            "token_id": embed_msg['footer']['text'],
+            "Activity_Type": embed_msg['fields'][ACTIVITY_TYPE]['value'],
+            "Activity_Name": embed_msg['fields'][ACTIVITY_NAME]['value'],
+            "Roster": embed_msg['fields'][ROSTER]['value']
         }
 
-        query = f"SELECT * FROM {embed_info['ACTIVITY_TYPE']} WHERE token_id = {embed_info['ID']}"
+        query = f"SELECT * FROM {embed_info['Activity_Type']} WHERE token_id = {embed_info['token_id']}"
         result = self.execute_query(query)
-        
-        result["Activity_Type"] = embed_info["ACTIVITY_TYPE"]
-        result["Activity_Name"] = embed_info["ACTIVITY_NAME"]
-        result["Roster"] = embed_info["ROSTER"]
 
-        return result.iloc[0]
+        return result.iloc[0], embed_info
 
-    def update_db_add(self, current_activity, user):        
+    def update_db_add(self, current_activity, embed_info, user):        
         """
         
         Placeholder
 
         """
-        MAX_PLAYERS = 3 if current_activity["Activity_Type"] == "Dungeon" else 6
+        MAX_PLAYERS = 3 if embed_info["Activity_Type"] == "Dungeon" else 6
 
         for num in range(1, MAX_PLAYERS+1):
             if current_activity[f'player{num}'] == None:
-                query = f"UPDATE {current_activity['Activity_Type']} SET player{num} = '{user.name}' WHERE token_id='{current_activity['token_id']}';"
+                query = f"UPDATE {embed_info['Activity_Type']} SET player{num} = '{user.name}' WHERE token_id='{embed_info['token_id']}';"
                 
                 if self.execute_query(query):
-                    print(f"=== Player {num} set for {current_activity['Activity_Type']} w/ token_id = {current_activity['token_id']}")
+                    print(f"=== Player {num} set for {embed_info['Activity_Type']} w/ token_id = {embed_info['token_id']}")
                     return True
                 
                 return False
         
-
     def update_db_remove(self, current_activity, user):
         """
         
