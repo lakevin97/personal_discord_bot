@@ -2,6 +2,7 @@ from utils.mysql_interface import MySql_Interface
 from discord import app_commands, Interaction, Embed, Message, Reaction, User
 from discord.ext import commands
 import datetime
+import pandas as pd
 
 THUMBNAIL_URL= 'https://paspahang.org/wp-content/uploads/2019/03/get-the-marvelous-funny-looking-cat-memes-of-funny-looking-cat-memes.jpg'
 
@@ -28,10 +29,19 @@ class DestinyCogs(commands.Cog):
         ])
     async def schedule_raid(self, interaction: Interaction, raid_name:str):
         """
+        This function the implementation of the slash command schedule_raid. Once
+        a user selects which raid name, it will generate an insert query to the MySQL
+        database and return a visual message for others to queue up.
 
-        Placeholder
+        Parameters
+        -----------
+        interaction: :class:`discord.Interaction`
+            The interaction that occurred.
 
+        raid_name: :class:`string`
+            The name of the raid the user selects when using the slash command.
         """
+
         token = self.generate_activity_id()
         query = f'INSERT INTO Raid (raid, player1, token_id) VALUES ("{raid_name}", "{interaction.user.name}", "{token}")'
         raid_embed = {
@@ -64,10 +74,19 @@ class DestinyCogs(commands.Cog):
         ])
     async def schedule_dungeon(self, interaction: Interaction, dungeon_name:str):
         """
+        This function the implementation of the slash command schedule_dungeon. Once
+        a user selects which dungeon name, it will generate an insert query to the MySQL
+        database and return a visual message for others to queue up.
 
-        Placeholder
+        Parameters
+        -----------
+        interaction: :class:`discord.Interaction`
+            The interaction that occurred.
 
+        dungeon_name: :class:`string`
+            The name of the dungeon the user selects when using the slash command.
         """
+
         token = self.generate_activity_id()
 
         query = f'INSERT INTO Dungeon (dungeon, player1, token_id) VALUES ("{dungeon_name}", "{interaction.user.name}", "{token}")'
@@ -76,7 +95,7 @@ class DestinyCogs(commands.Cog):
             "Activity_Type": "Dungeon",
             "Activity_Name": dungeon_name
             }
-        
+
         if self.execute_query(query):
             message = self.generate_embed(interaction.user.name, dungeon_embed, token)
             await interaction.response.send_message(embed=message)
@@ -87,8 +106,13 @@ class DestinyCogs(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message:Message):
         """
-        
-        Placeholder
+        This function will set the initial green check reaction for users to react to join
+        the roster in the scheduled activity. 
+
+        Parameters
+        -----------
+        message: :class:`discord.Message`
+            Message class from discord.py library to retrieve the initial activity message.
 
         """
 
@@ -101,10 +125,19 @@ class DestinyCogs(commands.Cog):
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction:Reaction, user:User):
         """
-        
-        Placeholder
 
+        This function will trigger an update to the database, if room permits, to the
+        corresponding activity the user chooses to react the message to.
+
+        Parameters
+        -----------
+        reaction: :class:`discord.Reaction`
+            Reaction class from discord.py library to retrieve the message information that was reacted.
+
+        user: :class:`discord.User`
+            User class from discord.py library to retrieve the corresponding user information that reacted.
         """
+
         message = reaction.message
 
         if user.bot == True or message.author != self.bot.user:
@@ -120,10 +153,18 @@ class DestinyCogs(commands.Cog):
     @commands.Cog.listener()
     async def on_reaction_remove(self, reaction:Reaction, user:User):
         """
-        
-        Placeholder
+        This function will trigger an update to the database, if participating, to the
+        corresponding activity to remove themselves from the roster if partcipating.
 
+        Parameters
+        -----------
+        reaction: :class:`discord.Reaction`
+            Reaction class from discord.py library to retrieve the message information that got a reaction removed.
+
+        user: :class:`discord.User`
+            User class from discord.py library to retrieve the corresponding user information that reacted.
         """
+
         message = reaction.message
 
         if user.bot == True or message.author != self.bot.user:
@@ -139,35 +180,70 @@ class DestinyCogs(commands.Cog):
             await message.edit(embed=new_embed)
 
     ### Helper functions ###
-    def execute_query(self, query:str) -> bool: 
+    def execute_query(self, query:str): 
         """
-        
-        Placeholder
+        A function that is called from `on_react_add` and `on_react_remove` to execute
+        a SQL query to update the database accordingly based on the user's action.
 
-        """        
+        Parameters
+        -----------
+        query: :class:`string`
+            A pre-defined SQL query based on the called function
+
+        Returns
+        ---------
+        :class:`bool`
+            Determines if the query execution was succesful if running an insert or update query.
+        result: :class:`pandas.dataframe` 
+            Returns the "select" query result in a pandas.dataframe 
+        """     
+
         db_client = MySql_Interface()
         result,is_successful = db_client.send_query(query=query)
         db_client.close_cnx()
 
-        if "INSERT" in query or "UPDATE" in query and is_successful:
-            return True
+        if "INSERT" in query or "UPDATE" in query:
+            if is_successful:
+                return True
+            else:
+                return False
 
         return result
 
     def generate_activity_id(self) -> str:
         """
-        
-        Placeholder
+        To generate a unique hash token by using the datetime value when this is called.
 
+        Returns
+        ---------
+        :class:`str`
+            The unique hash token based on the date and time when called.
         """
+
         return hash(str(datetime.datetime.now()))
     
-    def generate_embed(self, roster: str, dict:dict, token:str):
+    def generate_embed(self, roster: str, activity_info:dict, token:str) -> Embed:
         """
-        
-        Placeholder
+        Generates the associated embeded message based on the user's commands or 
+        actions related to the corresponding activity.  
 
+        Parameters
+        -----------
+        roster: :class:`string`
+            The people who are participating based on on_reaction_add and 
+            on_reaction_remove.
+        activity_info: :class:`dict`
+            Contains the key-value pair of the activity details.
+        token: :class:`str`
+            The unique token id for the corresponding activity.
+
+        Returns
+        ---------
+        :class:`discord.Embed`
+            Returns a discord embed object that would display the information in the text 
+            channel.
         """
+
         setup = {
             "footer":{
                 "text": token
@@ -179,12 +255,12 @@ class DestinyCogs(commands.Cog):
                 {
                     "inline":True,
                     "name":"Activity",
-                    "value": dict["Activity_Type"]
+                    "value": activity_info["Activity_Type"]
                 },
                 {
                     "inline":True,
                     "name":"Name",
-                    "value": dict["Activity_Name"]
+                    "value": activity_info["Activity_Name"]
                 },
                 {
                     "inline":False,
@@ -200,7 +276,21 @@ class DestinyCogs(commands.Cog):
         
         return Embed.from_dict(setup)
     
-    def get_activity(self, message:Embed):
+    def get_activity(self, message:Embed) -> (pd.DataFrame, dict):
+        """
+        Retrieves the activity information from the embeded message that was interacted with.
+
+        Parameters
+        -----------
+        message: :class:`discord.Embed`
+            The corresponding embed message that was intereacted with.
+
+        Returns
+        ---------
+        :class:`discord.Embed`
+            Returns a discord embed object that would display the information in the text 
+            channel.
+        """
         embed_msg = Embed.to_dict(message)
         ACTIVITY_TYPE=0
         ACTIVITY_NAME=1
@@ -220,9 +310,23 @@ class DestinyCogs(commands.Cog):
 
     def update_db_add(self, current_activity, embed_info, user):        
         """
+        A function that is called when a user reacts to an embedded message wanting to participate
+        in the activity and update the database if any available openings.
         
-        Placeholder
+        Parameters
+        -----------
+        current_activity: :class:`pandas.DataFrame`
+            Retrieves the activity row from MySQL to check if any user columns are null.
+        embed_info: :class:`dict`
+            Retrieves the associated information from the embedded message to generate
+            a SQL query.
+        user: :class:`discord.User`
+            Retrieves the user information that initiated the react_add event.
 
+        Returns
+        ---------
+        :class:`bool`
+            Returns `True` if the user has been successfully added to the activity else `False`.
         """
         MAX_PLAYERS = 3 if embed_info["Activity_Type"] == "Dungeon" else 6
 
@@ -243,9 +347,24 @@ class DestinyCogs(commands.Cog):
         
     def update_db_remove(self, current_activity,embed_info, user):
         """
+        A function that is called when a user removes their react from an embedded message
+        to remove themselves from participating.
         
-        Placeholder
+        Parameters
+        -----------
+        current_activity: :class:`pandas.DataFrame`
+            Retrieves the activity row from MySQL to check if the specified 
+            user is part of the roster
+        embed_info: :class:`dict`
+            Retrieves the associated information from the embedded message to generate
+            a SQL query.
+        user: :class:`discord.User`
+            Retrieves the user information that initiated the react_remove event.
 
+        Returns
+        ---------
+        :class:`bool`
+            Returns `True` if the user has been successfully removed else `False`.
         """
         MAX_PLAYERS = 3 if embed_info["Activity_Type"] == "Dungeon" else 6
 
@@ -258,3 +377,4 @@ class DestinyCogs(commands.Cog):
                     return True
                     
         return False
+    
