@@ -1,7 +1,3 @@
-drop table if exists Raid;
-drop table if exists Dungeon;
-drop table if exists User;
-
 create table if not exists User(
 	id varchar(256),
 	bungie_name	varchar(256) unique not null, 
@@ -13,7 +9,7 @@ create table if not exists Raid(
 	id			int			 auto_increment,
 	raid		varchar(256) not null,
     token_id    varchar(256) not null,
-    player1 	varchar(256) not null,
+    player1 	varchar(256),
     player2 	varchar(256),
     player3 	varchar(256),
     player4 	varchar(256),
@@ -33,7 +29,7 @@ create table if not exists Dungeon(
 	id			int			 auto_increment,
 	dungeon		varchar(256) not null,
     token_id    varchar(256) not null,
-    player1 	varchar(256) not null,
+    player1 	varchar(256),
     player2 	varchar(256),
     player3 	varchar(256),
     
@@ -42,4 +38,3 @@ create table if not exists Dungeon(
     foreign key (player2) references user(id),
     foreign key (player3) references user(id)
     );
-    
