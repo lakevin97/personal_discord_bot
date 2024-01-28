@@ -43,14 +43,16 @@ class DestinyCogs(commands.Cog):
         """
 
         token = self.generate_activity_id()
-        query = f'INSERT INTO Raid (raid, player1, token_id) VALUES ("{raid_name}", "{interaction.user.name}", "{token}")'
+        query = f'INSERT INTO raid (raid, player1, token_id) VALUES ("{raid_name}", "{interaction.user.name}", "{token}")'
         raid_embed = {
-            "Activity_Type": "Raid",
+            "Activity_Type": "raid",
             "Activity_Name": raid_name
             }
 
+        print(f"From schedule raid: {query}")
         if self.execute_query(query):
             message = self.generate_embed(interaction.user.name, raid_embed, token)
+            print("Waiting for response...")
             await interaction.response.send_message(embed=message)
         else:
             await interaction.response.send_message("An error has occured. Please contact Kevin with this error.", ephemeral=True)
@@ -89,10 +91,10 @@ class DestinyCogs(commands.Cog):
 
         token = self.generate_activity_id()
 
-        query = f'INSERT INTO Dungeon (dungeon, player1, token_id) VALUES ("{dungeon_name}", "{interaction.user.name}", "{token}")'
+        query = f'INSERT INTO dungeon (dungeon, player1, token_id) VALUES ("{dungeon_name}", "{interaction.user.name}", "{token}")'
         
         dungeon_embed = {
-            "Activity_Type": "Dungeon",
+            "Activity_Type": "dungeon",
             "Activity_Name": dungeon_name
             }
 
@@ -197,6 +199,7 @@ class DestinyCogs(commands.Cog):
         result: :class:`pandas.dataframe` 
             Returns the "select" query result in a pandas.dataframe 
         """     
+        print("=== Executing Query: {query}")
 
         db_client = MySql_Interface()
         result,is_successful = db_client.send_query(query=query)
@@ -328,7 +331,7 @@ class DestinyCogs(commands.Cog):
         :class:`bool`
             Returns `True` if the user has been successfully added to the activity else `False`.
         """
-        MAX_PLAYERS = 3 if embed_info["Activity_Type"] == "Dungeon" else 6
+        MAX_PLAYERS = 3 if embed_info["Activity_Type"] == "dungeon" else 6
 
         for num in range(1, MAX_PLAYERS+1):
             if current_activity[f'player{num}'] == user.name:
@@ -366,7 +369,7 @@ class DestinyCogs(commands.Cog):
         :class:`bool`
             Returns `True` if the user has been successfully removed else `False`.
         """
-        MAX_PLAYERS = 3 if embed_info["Activity_Type"] == "Dungeon" else 6
+        MAX_PLAYERS = 3 if embed_info["Activity_Type"] == "dungeon" else 6
 
         for num in range(1, MAX_PLAYERS+1):
             if current_activity[f'player{num}'] == user.name:

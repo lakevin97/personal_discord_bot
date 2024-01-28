@@ -1,11 +1,14 @@
-create table if not exists User(
+create database if not exists discord_bot;
+use discord_bot;
+
+create table if not exists user(
 	id varchar(256),
 	bungie_name	varchar(256) unique not null, 
     
     primary key(id)
     );
 
-create table if not exists Raid(
+create table if not exists raid(
 	id			int			 auto_increment,
 	raid		varchar(256) not null,
     token_id    varchar(256) not null,
@@ -25,7 +28,7 @@ create table if not exists Raid(
     foreign key (player6) references user(id)
     );
     
-create table if not exists Dungeon(
+create table if not exists dungeon(
 	id			int			 auto_increment,
 	dungeon		varchar(256) not null,
     token_id    varchar(256) not null,
@@ -38,3 +41,7 @@ create table if not exists Dungeon(
     foreign key (player2) references user(id),
     foreign key (player3) references user(id)
     );
+
+GRANT ALL PRIVILEGES on discord_bot.* to "discord_interface"@"%";
+
+FLUSH PRIVILEGES;
