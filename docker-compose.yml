@@ -1,0 +1,10 @@
+version: '1'
+services:
+  mysql:
+    build:
+      context: ./database/
+  bot:
+    build:
+      context: .
+    depends_on:
+      - mysql
