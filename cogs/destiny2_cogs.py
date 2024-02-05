@@ -3,13 +3,22 @@ from discord import app_commands, Interaction, Embed, Message, Reaction, User
 from discord.ext import commands
 import datetime
 import pandas as pd
-
-THUMBNAIL_URL= 'https://paspahang.org/wp-content/uploads/2019/03/get-the-marvelous-funny-looking-cat-memes-of-funny-looking-cat-memes.jpg'
+import random
 
 class DestinyCogs(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-     
+        self.description_list = []
+        self.thumbnail_list = []
+
+        with open("./description.txt", "r") as file:
+            for line in file:
+                self.description_list.append(line.strip())
+
+        with open("./thumbnail.txt", "r") as file:
+            for line in file:
+                self.thumbnail_list.append(line.strip())
+        
     @app_commands.command(
         description="To schedule a raid amongst Absolutely Chaotic."
         )
@@ -42,14 +51,17 @@ class DestinyCogs(commands.Cog):
             The name of the raid the user selects when using the slash command.
         """
 
+        if not self.is_registered(interaction.user.name):
+            await interaction.response.send_message("Seems like you aren't registered in the database. Goddamn it Kevin, you had one job.\n\nPlease use the command !register with your bungie username.", ephemeral=True)
+            return
+
         token = self.generate_activity_id()
         query = f'INSERT INTO raid (raid, player1, token_id) VALUES ("{raid_name}", "{interaction.user.name}", "{token}")'
         raid_embed = {
             "Activity_Type": "raid",
             "Activity_Name": raid_name
             }
-
-        print(f"From schedule raid: {query}")
+    
         if self.execute_query(query):
             message = self.generate_embed(interaction.user.name, raid_embed, token)
             print("Waiting for response...")
@@ -88,7 +100,10 @@ class DestinyCogs(commands.Cog):
         dungeon_name: :class:`string`
             The name of the dungeon the user selects when using the slash command.
         """
-
+        if not self.is_registered(interaction.user.name):
+            await interaction.response.send_message("Seems like you aren't registered in the database. Goddamn it Kevin, you had one job.\n\nPlease use the command !register with your bungie username.", ephemeral=True)
+            return
+        
         token = self.generate_activity_id()
 
         query = f'INSERT INTO dungeon (dungeon, player1, token_id) VALUES ("{dungeon_name}", "{interaction.user.name}", "{token}")'
@@ -167,11 +182,16 @@ class DestinyCogs(commands.Cog):
             User class from discord.py library to retrieve the corresponding user information that reacted.
         """
 
+        if user.bot == True or reaction.message.author != self.bot.user:
+            return
+
+        if not self.is_registered(user.name):
+            member = reaction.message.guild.get_member(user.id)
+            await member.send("Seems like you aren't registered in the database. Goddamn it Kevin, you had one job.\n\nPlease use the command !register with your bungie username in the server.")
+            return
+
         message = reaction.message
 
-        if user.bot == True or message.author != self.bot.user:
-            return
-                
         activity_snapshot, embed_info = self.get_activity(message.embeds[0])
 
         if self.update_db_add(activity_snapshot, embed_info, user):
@@ -207,8 +227,19 @@ class DestinyCogs(commands.Cog):
             new_roster = embed_info["Roster"].replace(user.name, "")
             new_embed = self.generate_embed(new_roster, embed_info, embed_info["token_id"])
             await message.edit(embed=new_embed)
-
+    
+    ########################
     ### Helper functions ###
+    ########################
+            
+    def is_registered(self, user:str) -> bool:
+        query = f'select * from user where id="{user}";'
+
+        if self.execute_query(query).empty:
+            return False
+        else:
+            return True
+        
     def execute_query(self, query:str): 
         """
         A function that is called from `on_react_add` and `on_react_remove` to execute
@@ -279,7 +310,7 @@ class DestinyCogs(commands.Cog):
                 "text": token
             },
             "thumbnail": {
-                "url": THUMBNAIL_URL
+                "url": random.choice(self.thumbnail_list)
             },
             "fields":[
                 {
@@ -300,7 +331,7 @@ class DestinyCogs(commands.Cog):
             ],
             "color":65280,
             "type":"rich",
-            "description":"Don't be a piece of shit and join ya filthy animal by hitting that reaction!",
+            "description":random.choice(self.description_list),
             "title":"Did someone schedule an activity, yes?"
             }
         
@@ -407,4 +438,3 @@ class DestinyCogs(commands.Cog):
                     return True
                     
         return False
-    
